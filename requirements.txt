@@ -1,0 +1,15 @@
+numpy
+onnxruntime
+onnx
+Pillow
+pandas
+scikit-learn
+torch
+torchvision
+matplotlib
+tqdm
+kaggle
+torchinfo
+torchmetrics
+jupyter
+ipykernel
