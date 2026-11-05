@@ -7,6 +7,8 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay
 )
 
+from data.loading.data_setup import find_classes
+
 
 def make_predictions(
     model: torch.nn.Module,
@@ -89,3 +91,16 @@ def plot_confusion_matrix(
     plt.tight_layout()
 
     return fig, ax
+
+
+def evaluate_model(model: torch.nn.Module,
+                   dataloader: torch.utils.data.DataLoader,
+                   device: torch.device):
+    
+    preds, labels = make_predictions(model, dataloader, device)
+
+    acc = calculate_acc(preds, labels)
+
+    fig, ax = plot_confusion_matrix(preds, labels)
+
+    return acc, fig, ax
