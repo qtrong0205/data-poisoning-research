@@ -3,6 +3,7 @@ from torch import nn
 from typing import Tuple, Dict, List
 from tqdm.auto import tqdm
 from timeit import default_timer as timer
+from pathlib import Path
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,

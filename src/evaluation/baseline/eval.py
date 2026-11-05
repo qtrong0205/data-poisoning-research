@@ -7,8 +7,6 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay
 )
 
-from data.loading.data_setup import find_classes
-
 
 def make_predictions(
     model: torch.nn.Module,

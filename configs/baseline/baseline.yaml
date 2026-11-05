@@ -1,0 +1,29 @@
+experiment:
+  name: baseline
+  seed: 42
+
+dataset:
+  name: PlantVillage
+  num_classes: 38
+  data_dir: data/raw
+  split_dir: data/splits
+  train_ratio: 0.8
+  image_size: [224, 224]
+  subset_ratio: 1.0
+
+model:
+  name: MobileNetV2
+  pretrained: true
+
+training:
+  epochs: 5
+  batch_size: 32
+  learning_rate: 0.01
+  optimizer: Adam
+  loss: CrossEntropyLoss
+  num_workers: 0
+
+evaluation:
+  metrics:
+    - accuracy
+  confusion_matrix: true

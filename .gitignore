@@ -38,6 +38,7 @@ htmlcov/
 
 # Local data and generated training artifacts
 data/raw/
+data/splits/
 data/processed/
 *.pth
 *.pt
