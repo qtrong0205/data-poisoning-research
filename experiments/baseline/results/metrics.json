@@ -1,0 +1,29 @@
+{
+    "experiment": "baseline",
+    "seed": 42,
+    "dataset": "PlantVillage",
+    "num_classes": 38,
+    "num_train_samples": 43429,
+    "num_test_samples": 10876,
+    "training": {
+        "train_loss": [
+            0.6078558172413391,
+            0.5614843918394643,
+            0.596513817300101,
+            0.6281245101359159,
+            0.6232119797974045
+        ],
+        "train_acc": [
+            0.8361469072164948,
+            0.8695185935198823,
+            0.8770618556701031,
+            0.8815629602356406,
+            0.8855900220913107
+        ],
+        "total_time": 848.968625579
+    },
+    "evaluation": {
+        "accuracy": 0.9564178006620081
+    },
+    "checkpoint": "models/checkpoints/baseline/best_model.pth"
+}
