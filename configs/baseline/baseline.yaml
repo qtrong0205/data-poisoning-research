@@ -5,7 +5,7 @@ experiment:
 dataset:
   name: PlantVillage
   num_classes: 38
-  data_dir: data/raw
+  data_dir: data/plantvillage dataset/color
   split_dir: data/splits
   train_ratio: 0.8
   image_size: [224, 224]
@@ -21,7 +21,7 @@ training:
   learning_rate: 0.01
   optimizer: Adam
   loss: CrossEntropyLoss
-  num_workers: 0
+  num_workers: 2
 
 evaluation:
   metrics:
