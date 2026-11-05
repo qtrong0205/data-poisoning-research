@@ -1,41 +1,67 @@
 from pathlib import Path
-from shutil import copy2
+from shutil import copy2, rmtree
 from sklearn.model_selection import train_test_split
+
+
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
 def split_dataset(
     source_dir: str,
     output_dir: str,
     train_ratio: float = 0.8,
-    random_state: int = None,
+    random_state: int = 42,
 ) -> None:
     """
-    Split an image classification dataset into train and test sets.
+    Split image classification dataset into train and test.
 
-    Source structure:
+    Source:
         source_dir/
             class_1/
             class_2/
-            ...
 
-    Output structure:
+    Output:
         output_dir/
             train/
             test/
     """
 
-    IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
+    if not 0 < train_ratio < 1:
+        raise ValueError("train_ratio must be between 0 and 1.")
 
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
 
-    classes = [folder for folder in source_dir.iterdir() if folder.is_dir()]
+    if not source_dir.exists():
+        raise FileNotFoundError(
+            f"Dataset directory not found: {source_dir}"
+        )
+
+    classes = sorted(
+        folder for folder in source_dir.iterdir()
+        if folder.is_dir()
+    )
+
+    if not classes:
+        raise FileNotFoundError(
+            f"No class folders found in {source_dir}"
+        )
+
+    # Remove old splits to avoid stale images.
+    if output_dir.exists():
+        rmtree(output_dir)
 
     for cls in classes:
-        images = [
+        images = sorted(
             img for img in cls.iterdir()
-            if img.is_file() and img.suffix.lower() in IMAGE_EXTENSIONS
-        ]
+            if img.is_file()
+            and img.suffix.lower() in IMAGE_EXTENSIONS
+        )
+
+        if len(images) < 2:
+            raise ValueError(
+                f"Class '{cls.name}' must contain at least 2 images."
+            )
 
         train_imgs, test_imgs = train_test_split(
             images,

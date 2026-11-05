@@ -98,64 +98,63 @@ def test_step(model: nn.Module,
     test_acc /= len(dataloader)
     return test_loss, test_acc
 
-def train(model: nn.Module,
-          train_dataloader: torch.utils.data.DataLoader,
-          test_dataloader: torch.utils.data.DataLoader,
-          loss_fn: nn.Module,
-          optimizer: torch.optim.Optimizer,
-          epochs: int,
-          device: torch.device,
-          checkpoint_path: str = "best_model.pth") -> Dict[str, List[float]]:
-    """Trains and tests a PyTorch model for a number of epochs.
-    ...
+
+def train(
+    model: nn.Module,
+    train_dataloader: torch.utils.data.DataLoader,
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    epochs: int,
+    device: torch.device,
+    checkpoint_path: str = "best_model.pth",
+) -> Dict[str, List[float]]:
     """
+    Train model using training dataset only.
+    Save the final model checkpoint.
+    """
+
     model_results = {
         "train_loss": [],
         "train_acc": [],
-        "test_loss": [],
-        "test_acc": [],
         "total_time": 0
     }
 
-    best_test_acc = float('-inf')  
-
     model.to(device)
 
-    # Start the timer
     start_time = timer()
 
     for epoch in tqdm(range(epochs)):
-        train_loss, train_acc = train_step(model=model,
-                                            dataloader=train_dataloader,
-                                            loss_fn=loss_fn,
-                                            optimizer=optimizer,
-                                            device=device)
 
-        test_loss, test_acc = test_step(model=model,
-                                         dataloader=test_dataloader,
-                                         loss_fn=loss_fn,
-                                         device=device)
+        train_loss, train_acc = train_step(
+            model=model,
+            dataloader=train_dataloader,
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            device=device
+        )
 
         print(
-            f"Epoch: {epoch+1} | "
-            f"train_loss: {train_loss:.4f} | train_acc: {train_acc:.4f} | "
-            f"test_loss: {test_loss:.4f} | test_acc: {test_acc:.4f}"
+            f"Epoch: {epoch + 1} | "
+            f"train_loss: {train_loss:.4f} | "
+            f"train_acc: {train_acc:.4f}"
         )
 
         model_results["train_loss"].append(train_loss)
         model_results["train_acc"].append(train_acc)
-        model_results["test_loss"].append(test_loss)
-        model_results["test_acc"].append(test_acc)
 
-        if test_acc > best_test_acc:
-            best_test_acc = test_acc
-            torch.save(model.state_dict(), checkpoint_path)
-            print(f"  → New best model saved (test_acc={test_acc:.4f})")
-
-    end_time = timer()
-
-    total_time = end_time - start_time
+    total_time = timer() - start_time
     model_results["total_time"] = total_time
-    print(f"\nTotal training time: {total_time:.2f} seconds")
+
+    # Save final checkpoint
+    checkpoint_path = Path(checkpoint_path)
+    checkpoint_path.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    torch.save(model.state_dict(), checkpoint_path)
+
+    print(f"\nCheckpoint saved: {checkpoint_path}")
+    print(f"Total training time: {total_time:.2f} seconds")
 
     return model_results
