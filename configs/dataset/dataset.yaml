@@ -1,0 +1,21 @@
+dataset:
+  name: PlantVillage
+  data_dir: data/plantvillage dataset/color
+  split_dir: data/splits
+  num_classes: 38
+  image_size: [224, 224]
+  train_ratio: 0.8
+  split_seed: 42
+  subset_seed: 42
+
+modes:
+  sweep:
+    use_subset: true
+    subset_ratio: 0.30
+    epochs: 3
+    seeds: [42, 43, 44]
+  confirm:
+    use_subset: false
+    subset_ratio: 1.0
+    epochs: 5
+    seeds: [42, 43, 44]

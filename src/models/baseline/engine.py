@@ -31,7 +31,9 @@ def train_step(model: nn.Module,
 
     train_loss, train_acc = 0, 0
 
-    for _, (X, y) in enumerate(dataloader):
+    sample_count = 0
+    for _, batch in enumerate(dataloader):
+        X, y = batch[:2]
         X, y = X.to(device), y.to(device)
 
         # 1. Forward pass
@@ -39,10 +41,12 @@ def train_step(model: nn.Module,
 
         # 2. Calculate loss and accuracy
         loss = loss_fn(y_pred, y)
-        train_loss += loss.item()
+        batch_size = len(y)
+        sample_count += batch_size
+        train_loss += loss.item() * batch_size
 
         y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_acc += (y_pred_class == y).sum().item() / len(y_pred)
+        train_acc += (y_pred_class == y).sum().item()
 
         # 3. Optimizer zero grad
         optimizer.zero_grad()
@@ -54,8 +58,10 @@ def train_step(model: nn.Module,
         optimizer.step()
 
     # Adjust metrics to get average loss and accuracy per batch
-    train_loss /= len(dataloader)
-    train_acc /= len(dataloader)
+    if sample_count == 0:
+        raise ValueError("Cannot train on an empty dataloader.")
+    train_loss /= sample_count
+    train_acc /= sample_count
     return train_loss, train_acc
 
 def test_step(model: nn.Module,
@@ -80,9 +86,11 @@ def test_step(model: nn.Module,
     model.eval()
 
     test_loss, test_acc = 0, 0
+    sample_count = 0
 
     with torch.inference_mode():
-        for _, (X, y) in enumerate(dataloader):
+        for _, batch in enumerate(dataloader):
+            X, y = batch[:2]
             X, y = X.to(device), y.to(device)
 
             # 1. Forward pass
@@ -90,13 +98,17 @@ def test_step(model: nn.Module,
 
             # 2. Calculate loss and accuracy
             loss = loss_fn(test_pred, y)
-            test_loss += loss.item()
+            batch_size = len(y)
+            sample_count += batch_size
+            test_loss += loss.item() * batch_size
 
             test_pred_class = torch.argmax(torch.softmax(test_pred, dim=1), dim=1)
-            test_acc += (test_pred_class == y).sum().item() / len(test_pred)
+            test_acc += (test_pred_class == y).sum().item()
 
-    test_loss /= len(dataloader)
-    test_acc /= len(dataloader)
+    if sample_count == 0:
+        raise ValueError("Cannot evaluate an empty dataloader.")
+    test_loss /= sample_count
+    test_acc /= sample_count
     return test_loss, test_acc
 
 
