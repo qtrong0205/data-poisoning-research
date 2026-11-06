@@ -6,7 +6,10 @@ from pathlib import Path
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
-    ConfusionMatrixDisplay
+    ConfusionMatrixDisplay,
+    f1_score,
+    precision_score,
+    recall_score,
 )
 
 
@@ -50,22 +53,40 @@ def make_predictions(
     return all_preds, all_labels, torch.cat(all_logits), all_sample_ids
 
 
-def calculate_acc(
+def calculate_metrics(
     preds: torch.Tensor,
-    labels: torch.Tensor
+    labels: torch.Tensor,
+    num_classes: int | None = None,
 ):
     """
-    Calculate classification accuracy.
+    Calculate classification metrics using macro averaging.
     """
 
-    acc = accuracy_score(
-        labels.numpy(),
-        preds.numpy()
+    metric_labels = list(range(num_classes)) if num_classes is not None else None
+    y_true = labels.numpy()
+    y_pred = preds.numpy()
+    metrics = {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(
+            y_true, y_pred, labels=metric_labels, average="macro", zero_division=0
+        ),
+        "recall": recall_score(
+            y_true, y_pred, labels=metric_labels, average="macro", zero_division=0
+        ),
+        "f1_score": f1_score(
+            y_true, y_pred, labels=metric_labels, average="macro", zero_division=0
+        ),
+    }
+
+    print(
+        "Metrics of model: "
+        f"accuracy={metrics['accuracy']:.4f}, "
+        f"precision={metrics['precision']:.4f}, "
+        f"recall={metrics['recall']:.4f}, "
+        f"f1_score={metrics['f1_score']:.4f}"
     )
 
-    print(f"Accuracy of model: {acc:.4f}")
-
-    return acc
+    return metrics
 
 
 def plot_confusion_matrix(
@@ -113,7 +134,12 @@ def evaluate_model(model: torch.nn.Module,
         model, dataloader, device, collect_details=True
     )
 
-    acc = calculate_acc(preds, labels)
+    metrics = calculate_metrics(
+        preds,
+        labels,
+        num_classes=len(class_names) if class_names else None,
+    )
+    acc = metrics["accuracy"]
 
     fig, ax = plot_confusion_matrix(
         preds, labels, class_names=class_names, num_classes=len(class_names)
@@ -138,5 +164,6 @@ def evaluate_model(model: torch.nn.Module,
         "y_pred": preds.tolist(),
         "logits": logits.tolist(),
         "sample_id": sample_ids,
+        "metrics": metrics,
     }
     return (acc, fig, ax, details) if return_details else (acc, fig, ax)

@@ -141,7 +141,7 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         model, train_loader, torch.nn.CrossEntropyLoss(), optimizer, epochs,
         device, str(checkpoint_path),
     )
-    accuracy, figure, _, prediction_data = evaluate_model(
+    _, figure, _, prediction_data = evaluate_model(
         model, test_loader, device, class_names=class_names,
         predictions_path=run_root / "predictions.csv",
         return_details=True,
@@ -161,13 +161,23 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         "epochs": epochs,
         "training_config": training,
         "training": training_results,
-        "evaluation": {"accuracy": float(accuracy)},
+        "evaluation": {
+            metric_name: float(metric_value)
+            for metric_name, metric_value in prediction_data["metrics"].items()
+        },
         "checkpoint": str(checkpoint_path.relative_to(PROJECT_ROOT)),
     }
     with (run_root / "metrics.json").open("w", encoding="utf-8") as file:
         json.dump(results, file, indent=2)
     with log_path.open("w", encoding="utf-8") as file:
-        file.write(f"mode={mode} seed={seed} accuracy={accuracy:.6f}\n")
+        evaluation = results["evaluation"]
+        file.write(
+            f"mode={mode} seed={seed} "
+            f"accuracy={evaluation['accuracy']:.6f} "
+            f"precision={evaluation['precision']:.6f} "
+            f"recall={evaluation['recall']:.6f} "
+            f"f1_score={evaluation['f1_score']:.6f}\n"
+        )
     return results
 
 
@@ -184,7 +194,14 @@ def main() -> None:
     seeds = configured_seeds if args.all_seeds else [args.seed or configured_seeds[0]]
     for seed in seeds:
         result = run_one(args.mode, seed)
-        print(f"{args.mode} seed {seed}: accuracy={result['evaluation']['accuracy']:.4f}")
+        evaluation = result["evaluation"]
+        print(
+            f"{args.mode} seed {seed}: "
+            f"accuracy={evaluation['accuracy']:.4f} "
+            f"precision={evaluation['precision']:.4f} "
+            f"recall={evaluation['recall']:.4f} "
+            f"f1_score={evaluation['f1_score']:.4f}"
+        )
 
 
 if __name__ == "__main__":
