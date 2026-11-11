@@ -111,9 +111,31 @@ def build_loaders(dataset_config: dict[str, Any], baseline_config: dict[str, Any
     )
 
 
+def _completed_run(mode: str, seed: int) -> dict[str, Any] | None:
+    output_root = PROJECT_ROOT / "experiments" / "baseline"
+    run_root = output_root / "results" / mode / f"seed_{seed}"
+    metrics_path = run_root / "metrics.json"
+    checkpoint_path = (
+        output_root / "checkpoints" / mode / f"seed_{seed}" / "final_model.pth"
+    )
+    if not metrics_path.is_file() or not checkpoint_path.is_file():
+        return None
+    try:
+        results = json.loads(metrics_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if results.get("mode") != mode or results.get("run_seed") != seed:
+        return None
+    return results
+
+
 def run_one(mode: str, seed: int) -> dict[str, Any]:
     dataset_config, baseline_config = load_config()
     validate_config(dataset_config, baseline_config, mode, seed)
+    completed = _completed_run(mode, seed)
+    if completed is not None:
+        print(f"{mode} seed {seed}: completed run found, skipping training.")
+        return completed
     set_seed(seed)
     dataset = dataset_config["dataset"]
     training = baseline_config["training"]

@@ -13,7 +13,7 @@ modes:
     use_subset: true
     subset_ratio: 0.30
     epochs: 3
-    seeds: [42, 43, 44]
+    seeds: [42]
   confirm:
     use_subset: false
     subset_ratio: 1.0
