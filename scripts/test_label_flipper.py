@@ -12,7 +12,7 @@ class TestLabelFlipper(unittest.TestCase):
         self.labels = [0, 0, 0, 1, 1, 1, 2, 2, 3, 3]
 
     def test_random_flip_rate(self):
-        flip_rate = 0.3 # Cần flip 3 mẫu (30% của 10)
+        flip_rate = 0.3 
         poisoned_labels, manifest = self.flipper.random_flip(self.labels, flip_rate=flip_rate, random_seed=42)
         
         self.assertEqual(len(manifest), 3)
@@ -22,7 +22,7 @@ class TestLabelFlipper(unittest.TestCase):
             self.assertTrue(0 <= info["poisoned_label"] < self.num_classes)
 
     def test_targeted_flip_logic(self):
-        # Chuyển nhãn 1 thành 3 với tỷ lệ 66% (~2 mẫu)
+        # Chuyển nhãn 1 thành 3 với tỷ lệ 66% 
         source_class = 1
         target_class = 3
         flip_rate = 0.66 
