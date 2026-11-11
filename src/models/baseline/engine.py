@@ -136,7 +136,13 @@ def train(
 
     start_time = timer()
 
-    for epoch in tqdm(range(epochs)):
+    epoch_progress = tqdm(
+        range(epochs),
+        desc="Training epochs",
+        unit="epoch",
+        dynamic_ncols=True,
+    )
+    for epoch in epoch_progress:
 
         train_loss, train_acc = train_step(
             model=model,
@@ -149,7 +155,12 @@ def train(
         print(
             f"Epoch: {epoch + 1} | "
             f"train_loss: {train_loss:.4f} | "
-            f"train_acc: {train_acc:.4f}"
+            f"train_acc: {train_acc:.4f}",
+            flush=True,
+        )
+        epoch_progress.set_postfix(
+            loss=f"{train_loss:.4f}",
+            accuracy=f"{train_acc:.4f}",
         )
 
         model_results["train_loss"].append(train_loss)
@@ -167,7 +178,7 @@ def train(
 
     torch.save(model.state_dict(), checkpoint_path)
 
-    print(f"\nCheckpoint saved: {checkpoint_path}")
-    print(f"Total training time: {total_time:.2f} seconds")
+    print(f"\nCheckpoint saved: {checkpoint_path}", flush=True)
+    print(f"Total training time: {total_time:.2f} seconds", flush=True)
 
     return model_results

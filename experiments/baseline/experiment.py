@@ -131,11 +131,15 @@ def _completed_run(mode: str, seed: int) -> dict[str, Any] | None:
 
 
 def run_one(mode: str, seed: int) -> dict[str, Any]:
+    print(f"\nStarting experiment: mode={mode}, seed={seed}", flush=True)
     dataset_config, baseline_config = load_config()
     validate_config(dataset_config, baseline_config, mode, seed)
     completed = _completed_run(mode, seed)
     if completed is not None:
-        print(f"{mode} seed {seed}: completed run found, skipping training.")
+        print(
+            f"{mode} seed {seed}: completed run found, skipping training.",
+            flush=True,
+        )
         return completed
     set_seed(seed)
     dataset = dataset_config["dataset"]
@@ -151,6 +155,12 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         dataset_config, baseline_config, mode, seed
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(
+        f"Configuration: device={device}, epochs={epochs}, "
+        f"train_samples={len(train_loader.dataset)}, "
+        f"test_samples={len(test_loader.dataset)}, classes={len(class_names)}",
+        flush=True,
+    )
     model = build_model(
         num_classes=dataset["num_classes"],
         device=device,
@@ -169,6 +179,7 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         predictions_path=run_root / "predictions.csv",
         return_details=True,
     )
+    print(f"Evaluation completed for mode={mode}, seed={seed}", flush=True)
     figure.savefig(run_root / "confusion_matrix.png", dpi=300, bbox_inches="tight")
     import matplotlib.pyplot as plt
     plt.close(figure)
@@ -215,15 +226,26 @@ def main() -> None:
     if args.all_seeds and args.seed is not None:
         parser.error("--seed and --all-seeds cannot be combined.")
     seeds = configured_seeds if args.all_seeds else [args.seed or configured_seeds[0]]
-    for seed in tqdm(seeds, desc=f"{args.mode} experiments", unit="experiment"):
+    experiment_progress = tqdm(
+        seeds,
+        desc=f"{args.mode} experiments",
+        unit="experiment",
+        dynamic_ncols=True,
+    )
+    for seed in experiment_progress:
         result = run_one(args.mode, seed)
         evaluation = result["evaluation"]
+        experiment_progress.set_postfix(
+            seed=seed,
+            accuracy=f"{evaluation['accuracy']:.4f}",
+        )
         print(
             f"{args.mode} seed {seed}: "
             f"accuracy={evaluation['accuracy']:.4f} "
             f"precision={evaluation['precision']:.4f} "
             f"recall={evaluation['recall']:.4f} "
-            f"f1_score={evaluation['f1_score']:.4f}"
+            f"f1_score={evaluation['f1_score']:.4f}",
+            flush=True,
         )
 
 
