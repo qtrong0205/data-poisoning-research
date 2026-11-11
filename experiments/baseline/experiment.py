@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import torch
 import yaml
+from tqdm.auto import tqdm
 
 from src.data.loading.data_setup import (
     ImageDataset,
@@ -214,7 +215,7 @@ def main() -> None:
     if args.all_seeds and args.seed is not None:
         parser.error("--seed and --all-seeds cannot be combined.")
     seeds = configured_seeds if args.all_seeds else [args.seed or configured_seeds[0]]
-    for seed in seeds:
+    for seed in tqdm(seeds, desc=f"{args.mode} experiments", unit="experiment"):
         result = run_one(args.mode, seed)
         evaluation = result["evaluation"]
         print(
