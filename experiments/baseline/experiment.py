@@ -3,6 +3,7 @@
 import argparse
 import json
 import random
+from time import perf_counter
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,11 @@ def build_loaders(dataset_config: dict[str, Any], baseline_config: dict[str, Any
     train_manifest = split_dir / "manifest_train.csv"
     test_manifest = split_dir / "manifest_test.csv"
     mapping = split_dir / "class_to_idx.json"
+    print(
+        f"Loading manifests: train={train_manifest.resolve()}, "
+        f"test={test_manifest.resolve()}, mapping={mapping.resolve()}",
+        flush=True,
+    )
     missing = [path for path in (train_manifest, test_manifest, mapping) if not path.is_file()]
     if missing:
         missing_text = ", ".join(str(path) for path in missing)
@@ -104,6 +110,11 @@ def build_loaders(dataset_config: dict[str, Any], baseline_config: dict[str, Any
         "num_workers": training["num_workers"],
         "generator": generator,
     }
+    print(
+        f"DataLoader configuration: batch_size={common['batch_size']}, "
+        f"num_workers={common['num_workers']}",
+        flush=True,
+    )
     return (
         create_dataloader(train_dataset, shuffle=True, worker_init_fn=_worker_init_fn, **common),
         create_dataloader(test_dataset, shuffle=False, worker_init_fn=_worker_init_fn, **common),
@@ -161,6 +172,12 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         f"test_samples={len(test_loader.dataset)}, classes={len(class_names)}",
         flush=True,
     )
+    print(
+        f"Evaluation output paths: run_root={run_root.resolve()}, "
+        f"predictions={(run_root / 'predictions.csv').resolve()}, "
+        f"checkpoint={checkpoint_path.resolve()}",
+        flush=True,
+    )
     model = build_model(
         num_classes=dataset["num_classes"],
         device=device,
@@ -174,12 +191,18 @@ def run_one(mode: str, seed: int) -> dict[str, Any]:
         model, train_loader, torch.nn.CrossEntropyLoss(), optimizer, epochs,
         device, str(checkpoint_path),
     )
+    print("Starting evaluate_model(...)", flush=True)
+    evaluation_start = perf_counter()
     _, figure, _, prediction_data = evaluate_model(
         model, test_loader, device, class_names=class_names,
         predictions_path=run_root / "predictions.csv",
         return_details=True,
     )
-    print(f"Evaluation completed for mode={mode}, seed={seed}", flush=True)
+    print(
+        f"Evaluation completed for mode={mode}, seed={seed}, "
+        f"elapsed={perf_counter() - evaluation_start:.2f}s",
+        flush=True,
+    )
     figure.savefig(run_root / "confusion_matrix.png", dpi=300, bbox_inches="tight")
     import matplotlib.pyplot as plt
     plt.close(figure)

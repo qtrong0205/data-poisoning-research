@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import csv
 from pathlib import Path
+from tqdm.auto import tqdm
 
 from sklearn.metrics import (
     accuracy_score,
@@ -25,13 +26,29 @@ def make_predictions(
 
     model.eval()
 
+    total_batches = len(dataloader)
+    if total_batches == 0:
+        raise ValueError("Cannot evaluate with an empty dataloader.")
+    print(
+        f"Evaluation inference started: samples={len(dataloader.dataset)}, "
+        f"batches={total_batches}, device={device}",
+        flush=True,
+    )
     all_preds = []
     all_labels = []
     all_logits = []
     all_sample_ids = []
+    evaluated_samples = 0
 
     with torch.inference_mode():
-        for batch in dataloader:
+        batch_progress = tqdm(
+            dataloader,
+            total=total_batches,
+            desc="Evaluating batches",
+            unit="batch",
+            dynamic_ncols=True,
+        )
+        for batch_index, batch in enumerate(batch_progress, start=1):
             X, y = batch[:2]
             X = X.to(device)
 
@@ -44,9 +61,16 @@ def make_predictions(
             if collect_details:
                 all_logits.append(logits.cpu())
                 all_sample_ids.extend(batch[2] if len(batch) > 2 else [])
+            evaluated_samples += y.shape[0]
+            batch_progress.set_postfix(samples=evaluated_samples)
 
     all_preds = torch.cat(all_preds)
     all_labels = torch.cat(all_labels)
+    print(
+        f"Evaluation inference finished: predictions={len(all_preds)}, "
+        f"labels={len(all_labels)}",
+        flush=True,
+    )
 
     if not collect_details:
         return all_preds, all_labels
@@ -83,7 +107,8 @@ def calculate_metrics(
         f"accuracy={metrics['accuracy']:.4f}, "
         f"precision={metrics['precision']:.4f}, "
         f"recall={metrics['recall']:.4f}, "
-        f"f1_score={metrics['f1_score']:.4f}"
+        f"f1_score={metrics['f1_score']:.4f}",
+        flush=True,
     )
 
     return metrics
@@ -129,11 +154,12 @@ def evaluate_model(model: torch.nn.Module,
                    class_names=None,
                    predictions_path: str | Path | None = None,
                    return_details: bool = False):
-    
+    print("Evaluation step 1/4: generating predictions.", flush=True)
     preds, labels, logits, sample_ids = make_predictions(
         model, dataloader, device, collect_details=True
     )
 
+    print("Evaluation step 2/4: calculating metrics.", flush=True)
     metrics = calculate_metrics(
         preds,
         labels,
@@ -141,23 +167,32 @@ def evaluate_model(model: torch.nn.Module,
     )
     acc = metrics["accuracy"]
 
+    print("Evaluation step 3/4: plotting confusion matrix.", flush=True)
     fig, ax = plot_confusion_matrix(
         preds, labels, class_names=class_names, num_classes=len(class_names)
         if class_names else None
     )
     if predictions_path is not None:
         path = Path(predictions_path)
+        print(f"Evaluation step 4/4: writing predictions to {path.resolve()}.", flush=True)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(["sample_id", "y_true", "y_pred", "logits"])
-            for index in range(len(labels)):
+            write_progress = tqdm(
+                range(len(labels)),
+                desc="Writing predictions",
+                unit="row",
+                dynamic_ncols=True,
+            )
+            for index in write_progress:
                 writer.writerow([
                     sample_ids[index] if index < len(sample_ids) else str(index),
                     int(labels[index]),
                     int(preds[index]),
                     logits[index].tolist(),
                 ])
+        print(f"Predictions written: {path} ({len(labels)} rows).", flush=True)
 
     details = {
         "y_true": labels.tolist(),
