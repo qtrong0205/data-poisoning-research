@@ -43,3 +43,9 @@ data/processed/
 *.pth
 *.pt
 *.ckpt
+
+# Experiment
+experiments/*/results/
+experiments/*/checkpoints/
+models/checkpoints/
+outputs/
