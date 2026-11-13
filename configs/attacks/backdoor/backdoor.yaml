@@ -1,0 +1,118 @@
+attack:
+  name: backdoor
+  type: all_to_one
+
+  trigger:
+    type: square
+    color: white
+    default_size_px: 16
+    default_position: bottom_right
+    supported_sizes_px: [8, 16, 32]
+    supported_positions:
+      - bottom_right
+      - top_left
+      - center
+
+  target:
+    class_name: Corn_(maize)___healthy
+    label: 10
+
+  poisoning:
+    source_scope: non_target_classes_only
+    rate_basis: eligible_samples
+    selection_seed: 42
+    preserve_original_manifests: true
+    apply_trigger_online: true
+    create_modified_image_copies: false
+
+data:
+  train_manifest: data/splits/manifest_train.csv
+  test_manifest: data/splits/manifest_test.csv
+  class_mapping: data/splits/class_to_idx.json
+  poisoned_manifest_root: data/poisoned/backdoor
+  subset_column: in_subset
+
+training:
+  model: MobileNetV2
+  reuse_baseline_pipeline: true
+  batch_size: 32
+  optimizer: Adam
+  loss: CrossEntropyLoss
+  learning_rate: 0.01
+
+evaluation:
+  clean_metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+
+  backdoor_metrics:
+    - attack_success_rate
+
+  asr:
+    exclude_target_class_from_denominator: true
+    apply_trigger_to_test_samples: true
+
+  keep_clean_test_manifest_unchanged: true
+
+experiments:
+  E-BD1:
+    name: poisoning_rate_sweep
+    mode: sweep
+    poisoning_rates: [0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40]
+    dataset_scope: subset
+    subset_ratio: 0.30
+    seed: 42
+    epochs: 3
+    trigger_size_px: default
+    trigger_position: default
+    output_dir: experiments/backdoor/E-BD1_poisoning_rate
+
+  E-BD2:
+    name: trigger_size_sweep
+    mode: sweep
+    trigger_sizes_px: [8, 16, 32]
+    poisoning_rates: null # TODO
+    dataset_scope: subset
+    subset_ratio: 0.30
+    seed: 42
+    epochs: 3
+    trigger_position: default
+    output_dir: experiments/backdoor/E-BD2_trigger_size
+
+  E-BD3:
+    name: trigger_position_sweep
+    mode: sweep
+    trigger_positions:
+      - bottom_right
+      - top_left
+      - center
+    poisoning_rates: null # TODO
+    dataset_scope: subset
+    subset_ratio: 0.30
+    seed: 42
+    epochs: 3
+    trigger_size_px: default
+    output_dir: experiments/backdoor/E-BD3_trigger_position
+
+  E-BD4:
+    name: representative_rate_confirmation
+    mode: confirm
+    poisoning_rates: null # TODO
+    dataset_scope: full
+    subset_ratio: 1.0
+    seeds: [42, 43, 44]
+    epochs: 5
+    trigger_size_px: default
+    trigger_position: default
+    output_dir: experiments/backdoor/E-BD4_confirm
+
+artifacts:
+  save_checkpoint: true
+  save_metrics_json: true
+  save_config_snapshot: true
+  save_poison_manifest_metadata: true
+  save_training_history: true
+  save_confusion_matrix: true
+  save_asr_details: true
