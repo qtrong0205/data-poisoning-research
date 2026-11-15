@@ -89,6 +89,7 @@ def plot_confusion_matrix(
     labels: torch.Tensor,
     class_names=None,
     num_classes=None,
+    title: str = "Baseline Confusion Matrix",
 ):
     """
     Plot confusion matrix.
@@ -112,7 +113,7 @@ def plot_confusion_matrix(
         colorbar=False
     )
 
-    plt.title("Baseline Confusion Matrix")
+    ax.set_title(title)
     plt.tight_layout()
 
     return fig, ax

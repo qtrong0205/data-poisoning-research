@@ -101,6 +101,8 @@ class ImageDataset(Dataset):
                     "sample_id": row["sample_id"],
                     "path": path,
                     "label": int(row["label"]),
+                    **({"is_poisoned": row["is_poisoned"].strip().lower() in {"1", "true", "yes"}}
+                       if "is_poisoned" in row else {}),
                 })
         if not self.samples:
             raise RuntimeError("Manifest or dataset contains no images.")
@@ -156,8 +158,7 @@ class BackdoorDataset(ImageDataset):
 
         self.trigger_config = trigger_config
 
-        manifest_columns = set(self.samples[0].keys())
-        if "is_poisoned" not in manifest_columns:
+        if any("is_poisoned" not in sample for sample in self.samples):
             raise ValueError("Manifest must contain is_poisoned column.")
 
     def __getitem__(self, index: int):
