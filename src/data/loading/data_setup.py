@@ -157,3 +157,49 @@ def create_dataloader(dataset,
         worker_init_fn=worker_init_fn,
     )
     return dataloader
+
+class LabelFlippingDataset(ImageDataset):
+    def __init__(
+        self,
+        targ_dir: Optional[str] = None,
+        transform: Optional[Callable] = None,
+        subset_ratio: float = 1.0,
+        seed: Optional[int] = None,
+        *,
+        manifest_path: Optional[str] = None,
+        dataset_root: Optional[str] = None,
+        class_mapping_path: Optional[str] = None,
+        in_subset: Optional[int] = None,
+        label_overrides: Optional[Mapping[str, int]] = None,
+    ):
+        super().__init__(
+            targ_dir=targ_dir,
+            transform=transform,
+            subset_ratio=subset_ratio,
+            seed=seed,
+            manifest_path=manifest_path,
+            dataset_root=dataset_root,
+            class_mapping_path=class_mapping_path,
+            in_subset=in_subset,
+            label_overrides=label_overrides,
+        )
+
+        if manifest_path is None:
+            raise ValueError("LabelFlippingDataset requires a poisoned manifest.")
+
+        manifest_columns = set(self.samples[0].keys())
+        if "is_poisoned" not in manifest_columns:
+            raise ValueError("Manifest must contain is_poisoned column.")
+
+    def __getitem__(self, index: int):
+        sample = self.samples[index]
+
+        image = self.load_image(index)
+        sample_id = str(sample["sample_id"])
+
+
+        label = int(sample["label"])
+        
+        is_poisoned = sample["is_poisoned"]
+
+        return image, label, is_poisoned, sample_id
