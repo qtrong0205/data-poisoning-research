@@ -431,5 +431,30 @@ def main(experiment_id, config_path):
     return results
 
 
+import argparse
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Prepare poisoned manifests for a selected experiment."
+    )
+
+    parser.add_argument(
+        "--experiment",
+        required=True,
+        choices=["E-BD1", "E-BD2", "E-BD3", "E-BD4"],
+        help="Experiment ID to prepare."
+    )
+
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to backdoor YAML configuration."
+    )
+
+    args = parser.parse_args()
+
+    main(
+        experiment_id=args.experiment,
+        config_path=args.config
+    )

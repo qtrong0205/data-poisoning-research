@@ -1,0 +1,20 @@
+{
+    "attack": "backdoor",
+    "experiment_id": "E-BD1",
+    "dataset_scope": "subset",
+    "subset_ratio": 0.3,
+    "poisoning_rate": 0.2,
+    "rate_basis": "eligible_samples",
+    "selection_seed": 42,
+    "target_class": "Corn_(maize)___healthy",
+    "target_label": 10,
+    "eligible_count": 12749,
+    "poison_count": 2550,
+    "total_samples": 13028,
+    "trigger": {
+        "type": "square",
+        "color": "white",
+        "size_px": "default",
+        "position": "default"
+    }
+}
