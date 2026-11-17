@@ -484,7 +484,7 @@ def build_dataloaders(
     )
 
     dataset_root = resolve_path(
-        dataset_settings["data_dir"]
+        dataset_settings["split_dir"]
     )
 
     class_to_idx = load_class_mapping(class_mapping_path)
