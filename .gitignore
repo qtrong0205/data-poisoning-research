@@ -43,6 +43,7 @@ data/processed/
 *.pth
 *.pt
 *.ckpt
+data/poisoned/*
 
 # Experiment
 experiments/*/results/
