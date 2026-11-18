@@ -73,7 +73,7 @@ experiments:
     name: trigger_size_sweep
     mode: sweep
     trigger_sizes_px: [8, 16, 32]
-    poisoning_rates: null # TODO
+    poisoning_rates: 0.20
     dataset_scope: subset
     subset_ratio: 0.30
     seed: 42
