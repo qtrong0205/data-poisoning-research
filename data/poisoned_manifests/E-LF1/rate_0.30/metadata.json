@@ -1,0 +1,8 @@
+{
+    "experiment_id": "E-LF1",
+    "strategy": "random",
+    "poisoning_rate": 0.3,
+    "selection_seed": 42,
+    "poison_count": 30,
+    "total_samples": 100
+}

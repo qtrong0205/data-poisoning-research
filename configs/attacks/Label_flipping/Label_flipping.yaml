@@ -1,0 +1,18 @@
+data:
+  train_manifest: "data/splits/manifest_train.csv"
+  test_manifest: "data/splits/manifest_test.csv"
+  class_mapping: "data/splits/class_to_idx.json"
+  poisoned_manifest_root: "data/poisoned_manifests"
+
+attack:
+  name: "label_flipping"
+  strategy: "random"         # Chọn "random" hoặc "targeted"
+  denominator: "all"         
+  source_class: null        
+  target_class: null       
+  selection_seed: 42
+
+experiments:
+  E-LF1:
+    dataset_scope: "full"   
+    poisoning_rates: [0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40]
