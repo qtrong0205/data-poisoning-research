@@ -88,7 +88,7 @@ experiments:
       - bottom_right
       - top_left
       - center
-    poisoning_rates: null # TODO
+    poisoning_rates: [0.20]
     dataset_scope: subset
     subset_ratio: 0.30
     seed: 42
@@ -99,7 +99,7 @@ experiments:
   E-BD4:
     name: representative_rate_confirmation
     mode: confirm
-    poisoning_rates: null # TODO
+    poisoning_rates: [0.05, 0.20, 0.40]
     dataset_scope: full
     subset_ratio: 1.0
     seeds: [42, 43, 44]
