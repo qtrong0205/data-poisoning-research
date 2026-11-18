@@ -96,11 +96,13 @@ class ImageDataset(Dataset):
                 path = self.root / row["rel_path"]
                 if not path.is_file():
                     raise FileNotFoundError(f"Manifest image not found: {path}")
-                self.samples.append({
+                sample = dict(row)
+                sample.update({
                     "sample_id": row["sample_id"],
                     "path": path,
                     "label": int(row["label"]),
                 })
+                self.samples.append(sample)
         if not self.samples:
             raise RuntimeError("Manifest or dataset contains no images.")
         self.transform = transform
@@ -196,10 +198,11 @@ class LabelFlippingDataset(ImageDataset):
 
         image = self.load_image(index)
         sample_id = str(sample["sample_id"])
-
-
         label = int(sample["label"])
-        
-        is_poisoned = sample["is_poisoned"]
+        is_poisoned = str(sample["is_poisoned"]).strip().lower() in {
+            "1", "true", "yes"
+        }
 
-        return image, label, is_poisoned, sample_id
+        if self.transform:
+            image = self.transform(image)
+        return image, label, sample_id, is_poisoned
