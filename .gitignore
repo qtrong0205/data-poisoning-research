@@ -44,6 +44,7 @@ data/poisoned/
 *.pth
 *.pt
 *.ckpt
+data/poisoned/*
 
 # Experiment
 experiments/*/results/

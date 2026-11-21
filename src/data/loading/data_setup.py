@@ -8,6 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
+from src.attacks.backdoor.poisoning import poison_sample
 
 IMAGE_EXTENSIONS = ("*.jpg", "*.jpeg", "*.png", "*.JPG", "*.JPEG", "*.PNG")
 
@@ -101,6 +102,8 @@ class ImageDataset(Dataset):
                     "sample_id": row["sample_id"],
                     "path": path,
                     "label": int(row["label"]),
+                    **({"is_poisoned": row["is_poisoned"].strip().lower() in {"1", "true", "yes"}}
+                       if "is_poisoned" in row else {}),
                 })
                 self.samples.append(sample)
         if not self.samples:
@@ -123,6 +126,68 @@ class ImageDataset(Dataset):
             image = self.transform(image)
 
         return image, label, sample_id
+
+
+class BackdoorDataset(ImageDataset):
+    def __init__(
+        self,
+        targ_dir: Optional[str] = None,
+        transform: Optional[Callable] = None,
+        subset_ratio: float = 1.0,
+        seed: Optional[int] = None,
+        *,
+        manifest_path: Optional[str] = None,
+        dataset_root: Optional[str] = None,
+        class_mapping_path: Optional[str] = None,
+        in_subset: Optional[int] = None,
+        label_overrides: Optional[Mapping[str, int]] = None,
+        trigger_config: Mapping,
+    ):
+        super().__init__(
+            targ_dir=targ_dir,
+            transform=transform,
+            subset_ratio=subset_ratio,
+            seed=seed,
+            manifest_path=manifest_path,
+            dataset_root=dataset_root,
+            class_mapping_path=class_mapping_path,
+            in_subset=in_subset,
+            label_overrides=label_overrides,
+        )
+
+        if manifest_path is None:
+            raise ValueError("BackdoorDataset requires a poisoned manifest.")
+
+        self.trigger_config = trigger_config
+
+        if any("is_poisoned" not in sample for sample in self.samples):
+            raise ValueError("Manifest must contain is_poisoned column.")
+
+    def __getitem__(self, index: int):
+        sample = self.samples[index]
+
+        image = self.load_image(index)
+        sample_id = str(sample["sample_id"])
+
+        is_poisoned = sample["is_poisoned"]
+
+        image = poison_sample(
+            image=image,
+            is_poisoned=is_poisoned,
+            trigger_config=self.trigger_config,
+        )
+
+        label = self.label_overrides.get(
+            sample_id,
+            int(sample["label"])
+        )
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label, sample_id
+
+
 
 def create_transform(size: Tuple[int, int],
                      num_magnitude_bins: int = 31,
