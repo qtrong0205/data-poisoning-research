@@ -40,6 +40,7 @@ htmlcov/
 data/raw/
 data/splits/
 data/processed/
+data/poisoned/
 *.pth
 *.pt
 *.ckpt

@@ -2,17 +2,75 @@ data:
   train_manifest: "data/splits/manifest_train.csv"
   test_manifest: "data/splits/manifest_test.csv"
   class_mapping: "data/splits/class_to_idx.json"
-  poisoned_manifest_root: "data/poisoned_manifests"
+  poisoned_manifest_root: "data/poisoned/label_flipping"
 
 attack:
   name: "label_flipping"
-  strategy: "random"         # Chọn "random" hoặc "targeted"
-  denominator: "all"         
-  source_class: null        
-  target_class: null       
+
+  # Default strategy; individual experiments can override this.
+  strategy: "random" # random | targeted
+
+  # Random: all
+  # Targeted: source_class
+  denominator: "all" # all | source_class
+
+  source_class: Corn_(maize)___Northern_Leaf_Blight
+  target_class: Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot # Class name, used for targeted
+
   selection_seed: 42
 
+  poisoning_rates: [0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40]
+
+  extra_rates: []
+
 experiments:
+  # E-LF1: Random Label Flipping - Rate Sweep
   E-LF1:
-    dataset_scope: "full"   
+    strategy: "random"
+    denominator: "all"
+
+    mode: "sweep"
+    dataset_scope: "subset"
+    subset_ratio: 0.30
+
+    epochs: 3
+    seed: 42
+
     poisoning_rates: [0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40]
+    extra_rates: []
+
+  # E-LF2: Targeted Label Flipping
+  E-LF2:
+    strategy: "targeted"
+    denominator: "source_class"
+
+    mode: "sweep"
+    dataset_scope: "subset"
+    subset_ratio: 0.30
+
+    epochs: 3
+    seed: 42
+
+    source_class: Corn_(maize)___Northern_Leaf_Blight
+    target_class: Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot
+
+    poisoning_rates: [0.05, 0.10, 0.20]
+
+  # E-LF3: Confirmatory Experiments
+  E-LF3:
+    strategy: "random"
+    denominator: "all"
+
+    mode: "confirm"
+    dataset_scope: "full"
+
+    epochs: 5
+    seeds: [42, 43, 44]
+
+    # Fill these three rates after analyzing E-LF1.
+    # Select one below the knee, one at the knee,
+    # and one at a high poisoning rate.
+    poisoning_rates: []
+
+    # Targeted confirmation can be configured separately
+    # if the research design requires it.
