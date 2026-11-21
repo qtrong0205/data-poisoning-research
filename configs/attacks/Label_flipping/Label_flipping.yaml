@@ -70,7 +70,7 @@ experiments:
     # Fill these three rates after analyzing E-LF1.
     # Select one below the knee, one at the knee,
     # and one at a high poisoning rate.
-    poisoning_rates: []
+    poisoning_rates: [0.05, 0.10, 0.20]
 
     # Targeted confirmation can be configured separately
     # if the research design requires it.
